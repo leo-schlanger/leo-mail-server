@@ -53,7 +53,6 @@ services:
       LOGIN_COMPANY_NAME: ${BULWARK_APP_NAME:-Mail}
       LOGIN_WEBSITE_URL: https://leoschlanger.com
       LOGIN_SHOW_VERSION: "false"
-      DEFAULT_LOCALE: pt-BR
     # Reach mail.leoschlanger.com through the host's Traefik instead of
     # hairpinning out to the public IP.
     extra_hosts:

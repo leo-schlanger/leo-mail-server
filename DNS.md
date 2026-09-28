@@ -27,11 +27,21 @@ IP do VPS: `72.62.235.122`.
 | TXT | `_dmarc.leoschlanger.com.` | `"v=DMARC1; p=none; rua=mailto:postmaster@leoschlanger.com; adkim=s; aspf=s"` |
 | TXT | `<seletor>._domainkey.leoschlanger.com.` | chave DKIM gerada pelo Stalwart |
 
-As chaves DKIM (e registros opcionais como SRV, MTA-STS e TLS-RPT) saem prontas com:
+As chaves DKIM (uma ed25519 e uma RSA) e os registros opcionais saem prontos com:
 
 ```bash
 /opt/mail/scripts/configure.sh dns
 ```
+
+Do que esse comando lista, publique também (opcional, ajuda apps a se configurarem sozinhos):
+`_imaps._tcp` e `_submissions._tcp` (SRV) e `_smtp._tls` (TLS-RPT).
+
+> ⚠️ **Não publique os registros TLSA.** Eles fixam a chave do certificado, e o Traefik gera uma
+> chave nova a cada renovação (~60 dias). Com TLSA publicado, servidores com DANE deixariam de
+> entregar email para você depois da renovação.
+>
+> MTA-STS (`mta-sts`, `_mta-sts`) e `ua-auto-config` ficam de fora por enquanto: o MTA-STS exige
+> certificado próprio para `mta-sts.leoschlanger.com`.
 
 Depois de 2 a 4 semanas sem problemas nos relatórios DMARC, troque `p=none` por `p=quarantine`.
 
