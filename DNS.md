@@ -45,11 +45,18 @@ Do que esse comando lista, publique também (opcional, ajuda apps a se configura
 
 Depois de 2 a 4 semanas sem problemas nos relatórios DMARC, troque `p=none` por `p=quarantine`.
 
+## Chaves DKIM não rodam sozinhas
+
+Como o DNS é manual, a rotação automática de DKIM está desligada (`rotateAfter` = 10 anos, em
+`stalwart/plan.ndjson`). Se um dia quiser trocar as chaves: gere novas no admin, publique os novos
+seletores no DNS e só então remova os antigos.
+
 ## Domínio adicional (ex.: outro-dominio.com)
 
-1. Admin do Stalwart (`https://mail.leoschlanger.com/admin`) → *Management → Domains* → adicionar.
+1. Adicione o domínio em `stalwart/plan.ndjson` e rode `configure.sh cli apply --file plan.ndjson`
+   (ou pelo admin: *Management → Domains*). Contas: `configure.sh user NOME outro-dominio.com`.
 2. No DNS **do novo domínio**: `MX 10 mail.leoschlanger.com.`, `TXT "v=spf1 a:mail.leoschlanger.com -all"`,
-   o DKIM mostrado em *View DNS Zone file* e um `_dmarc`.
+   os DKIM de `configure.sh dns outro-dominio.com` e um `_dmarc`.
 3. Não precisa de novo certificado: todos os domínios usam `mail.leoschlanger.com` como servidor.
 
 ## Checagens

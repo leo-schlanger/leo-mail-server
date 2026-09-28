@@ -3,8 +3,8 @@
 #
 #   configure.sh bootstrap   # 1. answer the setup wizard (Bootstrap object)
 #   configure.sh apply       # 2. load stalwart/plan.ndjson (listener, TLS, CORS)
-#   configure.sh user NAME   # 3. create NAME@leoschlanger.com (asks for password)
-#   configure.sh dns         # 4. print the DNS zone to publish
+#   configure.sh user NAME [DOMAIN]  # 3. create NAME@DOMAIN (default leoschlanger.com)
+#   configure.sh dns [DOMAIN]        # 4. print the DNS zone to publish
 #   configure.sh cli ARGS    #    run any stalwart-cli command
 #
 # All steps talk to Stalwart on http://127.0.0.1:8480 with the recovery admin
@@ -28,6 +28,11 @@ cli() {
     -e STALWART_URL=http://127.0.0.1:8480 \
     -e STALWART_USER="$ADMIN_USER" -e STALWART_PASSWORD="$ADMIN_PASS" \
     stalwartlabs/cli "$@"
+}
+
+domain_id() {  # id of a Domain by name
+  cli query Domain --fields id,name --json | python3 -c \
+    "import sys,json; print(next(r['id'] for r in map(json.loads,sys.stdin) if r.get('name')=='$1'))"
 }
 
 first_id() {  # id of the first object of a type (empty if none)
@@ -61,19 +66,17 @@ case "${1:-}" in
     docker compose logs --tail 20 stalwart
     ;;
   user)
-    name=${2:?usage: configure.sh user NAME}
-    read -r -s -p "Password for $name@$DOMAIN: " pw; echo
-    dom_id=$(cli query Domain --fields id,name --json | python3 -c \
-      "import sys,json; print(next(r['id'] for r in map(json.loads,sys.stdin) if r.get('name')=='$DOMAIN'))")
+    name=${2:?usage: configure.sh user NAME [DOMAIN]}
+    domain=${3:-$DOMAIN}
+    read -r -s -p "Password for $name@$domain: " pw; echo
+    dom_id=$(domain_id "$domain")
     cli create Account/User \
       --field name="$name" \
       --field domainId="$dom_id" \
       --field "credentials={\"0\":{\"@type\":\"Password\",\"secret\":$(python3 -c 'import json,sys;print(json.dumps(sys.argv[1]))' "$pw")}}"
     ;;
   dns)
-    dom_id=$(cli query Domain --fields id,name --json | python3 -c \
-      "import sys,json; print(next(r['id'] for r in map(json.loads,sys.stdin) if r.get('name')=='$DOMAIN'))")
-    cli get Domain "$dom_id" --fields dnsZoneFile
+    cli get Domain "$(domain_id "${2:-$DOMAIN}")" --fields dnsZoneFile
     ;;
   cli)
     shift; cli "$@"
