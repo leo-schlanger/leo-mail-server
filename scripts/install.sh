@@ -6,15 +6,6 @@ set -euo pipefail
 cd /opt/mail
 PUBLIC_IP=$(curl -4 -s https://ifconfig.me)
 
-echo "==> DNS preflight (public IP $PUBLIC_IP)"
-for h in mail.leoschlanger.com webmail.leoschlanger.com; do
-  ip=$(dig +short A "$h" @8.8.8.8 | tail -1)
-  if [ "$ip" != "$PUBLIC_IP" ]; then
-    echo "ABORT: $h resolves to '${ip:-nothing}', expected $PUBLIC_IP. Create the DNS records first (DNS.md)." >&2
-    exit 1
-  fi
-done
-
 echo "==> .env"
 if [ ! -f .env ]; then
   cp .env.example .env
@@ -28,6 +19,15 @@ set -a; . ./.env; set +a
 [ -d "$TRAEFIK_DYNAMIC_DIR" ] || { echo "ABORT: TRAEFIK_DYNAMIC_DIR '$TRAEFIK_DYNAMIC_DIR' not found" >&2; exit 1; }
 [ -f "$TRAEFIK_ACME_JSON" ] || { echo "ABORT: TRAEFIK_ACME_JSON '$TRAEFIK_ACME_JSON' not found" >&2; exit 1; }
 mkdir -p certs logs backups
+
+echo "==> DNS preflight (public IP $PUBLIC_IP)"
+for h in mail.leoschlanger.com webmail.leoschlanger.com; do
+  ip=$(dig +short A "$h" @8.8.8.8 | tail -1)
+  if [ "$ip" != "$PUBLIC_IP" ]; then
+    echo "ABORT: $h resolves to '${ip:-nothing}', expected $PUBLIC_IP. Create the DNS records first (DNS.md)." >&2
+    exit 1
+  fi
+done
 
 echo "==> Traefik route"
 sed "s/__CERT_RESOLVER__/$TRAEFIK_CERT_RESOLVER/" traefik/mail.yml > "$TRAEFIK_DYNAMIC_DIR/mail.yml"
