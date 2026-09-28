@@ -1,0 +1,14 @@
+# Secrets and runtime data (live only on the server)
+.env
+*.env
+!.env.example
+certs/
+backups/
+logs/
+*.pem
+*.key
+*.tar.gz
+
+# Local tooling
+.claude/
+graphify-out/

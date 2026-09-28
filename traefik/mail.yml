@@ -1,0 +1,44 @@
+# Traefik dynamic config, copied by scripts/install.sh into $TRAEFIK_DYNAMIC_DIR.
+# __CERT_RESOLVER__ is replaced with $TRAEFIK_CERT_RESOLVER from .env.
+http:
+  routers:
+    # Stalwart: admin (/admin), user self-service (/account), JMAP, autoconfig.
+    # This router is also what makes Traefik issue the mail.leoschlanger.com
+    # certificate that scripts/sync-certs.py hands to SMTP/IMAP.
+    stalwart:
+      rule: "Host(`mail.leoschlanger.com`) || Host(`autoconfig.leoschlanger.com`) || Host(`autodiscover.leoschlanger.com`)"
+      entryPoints:
+        - websecure
+      service: stalwart
+      tls:
+        certResolver: __CERT_RESOLVER__
+      middlewares:
+        - mail-headers
+
+    bulwark:
+      rule: "Host(`webmail.leoschlanger.com`)"
+      entryPoints:
+        - websecure
+      service: bulwark
+      tls:
+        certResolver: __CERT_RESOLVER__
+      middlewares:
+        - mail-headers
+
+  services:
+    stalwart:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:8480"
+    bulwark:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:8481"
+
+  middlewares:
+    mail-headers:
+      headers:
+        STSSeconds: 31536000
+        STSIncludeSubdomains: false
+        contentTypeNosniff: true
+        referrerPolicy: "same-origin"
