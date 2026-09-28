@@ -24,7 +24,7 @@ def read_env(path="/opt/mail/.env"):
             line = line.strip()
             if line and not line.startswith("#") and "=" in line:
                 k, v = line.split("=", 1)
-                env[k] = v
+                env[k] = v.strip().strip("\"'")
     return env
 
 
