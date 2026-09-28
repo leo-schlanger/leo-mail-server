@@ -30,16 +30,6 @@ cli() {
     stalwartlabs/cli "$@"
 }
 
-recovery() {  # (re)start Stalwart with or without recovery mode
-  if [ "$1" = on ]; then
-    STALWART_RECOVERY_MODE=1 docker compose up -d --force-recreate stalwart
-  else
-    docker compose up -d --force-recreate stalwart
-  fi
-  for _ in $(seq 1 30); do curl -s -o /dev/null http://127.0.0.1:8480/ && return 0; sleep 2; done
-  echo "Stalwart did not answer on :8480" >&2; docker compose logs --tail 50 stalwart; exit 1
-}
-
 case "${1:-}" in
   bootstrap)
     cli update Bootstrap \
@@ -52,11 +42,8 @@ case "${1:-}" in
     sleep 3; docker compose restart stalwart
     ;;
   apply)
-    # The HTTP listener on :8080 only exists once plan.ndjson is applied, so
-    # the first apply runs in recovery mode (which always serves :8080).
-    recovery on
     cli apply --file plan.ndjson
-    recovery off
+    docker compose restart stalwart
     docker compose logs --tail 20 stalwart
     ;;
   user)

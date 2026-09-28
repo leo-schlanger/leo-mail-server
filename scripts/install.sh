@@ -41,7 +41,7 @@ for i in $(seq 1 30); do
 done
 
 echo "==> Firewall (UFW) for mail ports"
-for p in 25 465 587 993; do ufw allow "$p/tcp" comment mail >/dev/null; done
+for p in 25 465 993; do ufw allow "$p/tcp" comment mail >/dev/null; done
 
 echo "==> Start containers"
 docker compose pull -q

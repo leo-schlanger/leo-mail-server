@@ -41,7 +41,7 @@ Pré-requisito: um Traefik já rodando no host, com o *file provider* e um resol
 ### Ler emails
 - **Navegador:** `https://webmail.leoschlanger.com`. No celular, "Adicionar à tela inicial" instala como app.
 - **Apps (Thunderbird, Apple Mail, K-9/FairEmail, Outlook):** só email e senha; a configuração é automática (autoconfig).
-  Manual: IMAP `mail.leoschlanger.com:993` SSL/TLS · SMTP `mail.leoschlanger.com:465` SSL/TLS.
+  Manual: IMAP `mail.leoschlanger.com:993` SSL/TLS · SMTP `mail.leoschlanger.com:465` SSL/TLS (a porta 587 não é usada).
 - **Dentro do Gmail:** use o redirecionamento (abaixo) para receber e, para responder com o seu domínio,
   Gmail → Configurações → *Contas e importação* → "Enviar email como" → SMTP `mail.leoschlanger.com`, porta 465, SSL.
 

@@ -21,7 +21,6 @@ services:
     ports:
       - "25:25"       # SMTP (receive mail from other servers)
       - "465:465"     # SMTP submission, implicit TLS (mail clients send)
-      - "587:587"     # SMTP submission, STARTTLS (mail clients send)
       - "993:993"     # IMAP over TLS (mail clients read)
       - "127.0.0.1:8480:8080"   # HTTP: admin, JMAP, autoconfig -> Traefik
     volumes:
