@@ -6,7 +6,7 @@ http:
     # This router is also what makes Traefik issue the mail.leoschlanger.com
     # certificate that scripts/sync-certs.py hands to SMTP/IMAP.
     stalwart:
-      rule: "Host(`mail.leoschlanger.com`) || Host(`autoconfig.leoschlanger.com`) || Host(`autodiscover.leoschlanger.com`)"
+      rule: "Host(`mail.leoschlanger.com`)"
       entryPoints:
         - websecure
       service: stalwart
@@ -14,6 +14,16 @@ http:
         certResolver: __CERT_RESOLVER__
       middlewares:
         - mail-headers
+
+    # Separate router (and certificate) so a missing autoconfig DNS record
+    # never blocks the mail.leoschlanger.com certificate.
+    stalwart-autoconfig:
+      rule: "Host(`autoconfig.leoschlanger.com`) || Host(`autodiscover.leoschlanger.com`)"
+      entryPoints:
+        - websecure
+      service: stalwart
+      tls:
+        certResolver: __CERT_RESOLVER__
 
     bulwark:
       rule: "Host(`webmail.leoschlanger.com`)"
