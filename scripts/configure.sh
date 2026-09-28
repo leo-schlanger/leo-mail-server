@@ -23,7 +23,7 @@ ADMIN_PASS=${STALWART_RECOVERY_ADMIN#*:}
 
 cli() {
   docker run --rm -i --network host \
-    -v stalwart-cli-cache:/home/nonroot/.cache \
+    -e XDG_CACHE_HOME=/tmp \
     -v "$PWD/stalwart":/work:ro -w /work \
     -e STALWART_URL=http://127.0.0.1:8480 \
     -e STALWART_USER="$ADMIN_USER" -e STALWART_PASSWORD="$ADMIN_PASS" \
