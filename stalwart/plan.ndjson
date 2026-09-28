@@ -1,2 +1,3 @@
 {"@type":"upsert","object":"NetworkListener","matchOn":["name"],"value":{"lst-http":{"name":"http","protocol":"http","bind":{"[::]:8080":true},"useTls":false}}}
 {"@type":"update","object":"Http","value":{"usePermissiveCors":true,"useXForwarded":true,"enableHsts":true}}
+{"@type":"upsert","object":"SpamDnsblServer","matchOn":["name"],"value":{"dnsbl-spamcop":{"@type":"Ip","name":"STWT_RBL_SPAMCOP_IP","enable":false}}}
