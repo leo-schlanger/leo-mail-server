@@ -30,6 +30,11 @@ cli() {
     stalwartlabs/cli "$@"
 }
 
+first_id() {  # id of the first object of a type (empty if none)
+  cli query "$1" --fields id --json | python3 -c \
+    "import sys,json; ids=[json.loads(l)['id'] for l in sys.stdin if l.strip()]; print(ids[0] if ids else '')"
+}
+
 case "${1:-}" in
   bootstrap)
     cli update Bootstrap \
@@ -43,6 +48,15 @@ case "${1:-}" in
     ;;
   apply)
     cli apply --file plan.ndjson
+    # Certificate has no natural key, so it is created once instead of upserted.
+    cert_id=$(first_id Certificate)
+    if [ -z "$cert_id" ]; then
+      cli create Certificate \
+        --field "certificate={\"@type\":\"File\",\"filePath\":\"/certs/$HOST/cert.pem\"}" \
+        --field "privateKey={\"@type\":\"File\",\"filePath\":\"/certs/$HOST/key.pem\"}"
+      cert_id=$(first_id Certificate)
+    fi
+    cli update SystemSettings --field defaultHostname=$HOST --field defaultCertificateId="$cert_id"
     docker compose restart stalwart
     docker compose logs --tail 20 stalwart
     ;;

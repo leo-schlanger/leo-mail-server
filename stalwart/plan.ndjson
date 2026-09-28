@@ -1,4 +1,2 @@
 {"@type":"upsert","object":"NetworkListener","matchOn":["name"],"value":{"lst-http":{"name":"http","protocol":"http","bind":{"[::]:8080":true},"useTls":false}}}
-{"@type":"upsert","object":"Certificate","matchOn":["description"],"value":{"cert-mail":{"description":"mail.leoschlanger.com (Traefik)","certificate":{"@type":"File","filePath":"/certs/mail.leoschlanger.com/cert.pem"},"privateKey":{"@type":"File","filePath":"/certs/mail.leoschlanger.com/key.pem"}}}}
 {"@type":"update","object":"Http","value":{"usePermissiveCors":true,"useXForwarded":true,"enableHsts":true}}
-{"@type":"update","object":"SystemSettings","value":{"defaultHostname":"mail.leoschlanger.com","defaultCertificateId":"#cert-mail"}}
