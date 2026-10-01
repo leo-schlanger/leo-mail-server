@@ -75,6 +75,46 @@ services:
       driver: json-file
       options: { max-size: "10m", max-file: "3" }
 
+  # Webmail of olhaqueduas.com: same Stalwart, own hostname and branding
+  # (webmail.olhaqueduas.com via traefik/olhaqueduas.yml), own settings volumes.
+  bulwark-olhaqueduas:
+    image: ghcr.io/bulwarkmail/webmail:1.11
+    container_name: bulwark-olhaqueduas
+    restart: unless-stopped
+    depends_on: [stalwart]
+    environment:
+      HOSTNAME: 0.0.0.0
+      PORT: 3000
+      JMAP_SERVER_URL: https://mail.olhaqueduas.com
+      STALWART_FEATURES: "true"
+      SESSION_SECRET: ${BULWARK_OQD_SESSION_SECRET:?set BULWARK_OQD_SESSION_SECRET in .env}
+      SETTINGS_SYNC_ENABLED: "true"
+      TRUSTED_PROXY_DEPTH: "1"
+      BULWARK_TELEMETRY: "off"
+      APP_NAME: Olha que Duas Mail
+      LOGIN_COMPANY_NAME: Olha que Duas
+      LOGIN_WEBSITE_URL: https://olhaqueduas.com
+      LOGIN_SHOW_VERSION: "false"
+    extra_hosts:
+      - "mail.olhaqueduas.com:host-gateway"
+    ports:
+      - "127.0.0.1:8482:3000"
+    volumes:
+      - bulwark-oqd-settings:/app/data/settings
+      - bulwark-oqd-admin:/app/data/admin
+      - bulwark-oqd-admin-state:/app/data/admin-state
+      - bulwark-oqd-telemetry:/app/data/telemetry
+    networks: [mail]
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
 networks:
   mail:
     ipam:
@@ -88,3 +128,7 @@ volumes:
   bulwark-admin:
   bulwark-admin-state:
   bulwark-telemetry:
+  bulwark-oqd-settings:
+  bulwark-oqd-admin:
+  bulwark-oqd-admin-state:
+  bulwark-oqd-telemetry:

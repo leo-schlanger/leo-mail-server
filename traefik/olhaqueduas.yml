@@ -1,0 +1,41 @@
+# Traefik dynamic config for the olhaqueduas.com mail hostnames.
+# Copied into $TRAEFIK_DYNAMIC_DIR (replace __CERT_RESOLVER__) only AFTER the
+# A records below point to the VPS, so Let's Encrypt validation succeeds:
+#   mail / webmail / autoconfig / autodiscover .olhaqueduas.com -> 72.62.235.122
+http:
+  routers:
+    # Also issues the mail.olhaqueduas.com certificate that sync-certs.py
+    # hands to Stalwart for SMTP/IMAP (MAIL_EXTRA_HOSTNAMES in .env).
+    oqd-stalwart:
+      rule: "Host(`mail.olhaqueduas.com`)"
+      entryPoints:
+        - websecure
+      service: stalwart
+      tls:
+        certResolver: __CERT_RESOLVER__
+      middlewares:
+        - mail-headers
+
+    oqd-autoconfig:
+      rule: "Host(`autoconfig.olhaqueduas.com`) || Host(`autodiscover.olhaqueduas.com`)"
+      entryPoints:
+        - websecure
+      service: stalwart
+      tls:
+        certResolver: __CERT_RESOLVER__
+
+    oqd-webmail:
+      rule: "Host(`webmail.olhaqueduas.com`)"
+      entryPoints:
+        - websecure
+      service: bulwark-olhaqueduas
+      tls:
+        certResolver: __CERT_RESOLVER__
+      middlewares:
+        - mail-headers
+
+  services:
+    bulwark-olhaqueduas:
+      loadBalancer:
+        servers:
+          - url: "http://127.0.0.1:8482"
