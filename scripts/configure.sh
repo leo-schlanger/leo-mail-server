@@ -66,8 +66,9 @@ case "${1:-}" in
     ;;
   apply)
     cli apply --file plan.ndjson
-    # POP3 (995) is not published by the compose file, so drop its listener:
-    # otherwise autoconfig advertises a port nobody can reach.
+    # POP3 (995) is not published by the compose file, so drop its listener
+    # (plan.ndjson also leaves pop3/managesieve out of the advertised services,
+    # so autoconfig offers only IMAP 993 and SMTP 465).
     pop_id=$(cli query NetworkListener --fields id,name --json | python3 -c \
       "import sys,json; print(next((r['id'] for r in map(json.loads,sys.stdin) if r.get('name')=='pop3s'),''))")
     [ -z "$pop_id" ] || cli delete NetworkListener --ids "$pop_id"
