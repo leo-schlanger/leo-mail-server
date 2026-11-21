@@ -7,19 +7,32 @@
 #   configure.sh dns [DOMAIN]        # 4. print the DNS zone to publish
 #   configure.sh cli ARGS    #    run any stalwart-cli command
 #
-# All steps talk to Stalwart on http://127.0.0.1:8480 with the recovery admin
-# from .env. Fallback for step 1: open an SSH tunnel
+# All steps talk to Stalwart on http://127.0.0.1:8480. Credentials:
+#   - first install / recovery: STALWART_RECOVERY_ADMIN (user:password) in .env;
+#   - afterwards (recovery admin removed): the permanent admin,
+#     STALWART_ADMIN_USER (default admin@leoschlanger.com) and the password from
+#     STALWART_ADMIN_PASSWORD or, if unset, asked for on the terminal.
+# Fallback for step 1: open an SSH tunnel
 #   ssh -L 8480:127.0.0.1:8480 personal-vps
 # and use the wizard at http://localhost:8480/admin
 set -euo pipefail
 cd /opt/mail
 DOMAIN=leoschlanger.com
 HOST=mail.leoschlanger.com
+CLI_IMAGE=stalwartlabs/cli:1.0.14   # pinned, tested on 0.16 (latest moved to 2.x on 2026-11-16)
 
 # shellcheck disable=SC1091
 set -a; . ./.env; set +a
-ADMIN_USER=${STALWART_RECOVERY_ADMIN%%:*}
-ADMIN_PASS=${STALWART_RECOVERY_ADMIN#*:}
+if [ -n "${STALWART_RECOVERY_ADMIN:-}" ]; then
+  ADMIN_USER=${STALWART_RECOVERY_ADMIN%%:*}
+  ADMIN_PASS=${STALWART_RECOVERY_ADMIN#*:}
+else
+  ADMIN_USER=${STALWART_ADMIN_USER:-admin@leoschlanger.com}
+  ADMIN_PASS=${STALWART_ADMIN_PASSWORD:-}
+  if [ -z "$ADMIN_PASS" ]; then
+    read -r -s -p "Stalwart password for $ADMIN_USER: " ADMIN_PASS </dev/tty; echo >&2
+  fi
+fi
 
 cli() {
   docker run --rm -i --network host \
@@ -27,7 +40,7 @@ cli() {
     -v "$PWD/stalwart":/work:ro -w /work \
     -e STALWART_URL=http://127.0.0.1:8480 \
     -e STALWART_USER="$ADMIN_USER" -e STALWART_PASSWORD="$ADMIN_PASS" \
-    stalwartlabs/cli "$@"
+    "$CLI_IMAGE" "$@"
 }
 
 domain_id() {  # id of a Domain by name
@@ -82,6 +95,6 @@ case "${1:-}" in
     shift; cli "$@"
     ;;
   *)
-    sed -n '2,13p' "$0"; exit 1
+    sed -n '2,17p' "$0"; exit 1
     ;;
 esac

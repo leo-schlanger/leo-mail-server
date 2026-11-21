@@ -9,7 +9,7 @@ name: mail
 
 services:
   stalwart:
-    image: stalwartlabs/stalwart:v0.16
+    image: stalwartlabs/stalwart:v0.16.27   # stay on 0.16: 1.x needs stalwart-migrate
     container_name: stalwart
     restart: unless-stopped
     hostname: mail.leoschlanger.com
@@ -36,7 +36,7 @@ services:
       options: { max-size: "20m", max-file: "5" }
 
   bulwark:
-    image: ghcr.io/bulwarkmail/webmail:1.11
+    image: ghcr.io/bulwarkmail/webmail:1.21.3
     container_name: bulwark
     restart: unless-stopped
     depends_on: [stalwart]
@@ -64,13 +64,11 @@ services:
       - bulwark-admin:/app/data/admin
       - bulwark-admin-state:/app/data/admin-state
       - bulwark-telemetry:/app/data/telemetry
+      - bulwark-plugin-secrets:/app/data/plugin-secrets
+      - bulwark-version-check:/app/data/version-check
     networks: [mail]
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
+    # Health check: the image's own (node healthcheck.mjs -> /api/health/live,
+    # liveness only, so a Stalwart restart never marks the webmail unhealthy).
     logging:
       driver: json-file
       options: { max-size: "10m", max-file: "3" }
@@ -78,7 +76,7 @@ services:
   # Webmail of olhaqueduas.com: same Stalwart, own hostname and branding
   # (webmail.olhaqueduas.com via traefik/olhaqueduas.yml), own settings volumes.
   bulwark-olhaqueduas:
-    image: ghcr.io/bulwarkmail/webmail:1.11
+    image: ghcr.io/bulwarkmail/webmail:1.21.3
     container_name: bulwark-olhaqueduas
     restart: unless-stopped
     depends_on: [stalwart]
@@ -104,13 +102,11 @@ services:
       - bulwark-oqd-admin:/app/data/admin
       - bulwark-oqd-admin-state:/app/data/admin-state
       - bulwark-oqd-telemetry:/app/data/telemetry
+      - bulwark-oqd-plugin-secrets:/app/data/plugin-secrets
+      - bulwark-oqd-version-check:/app/data/version-check
     networks: [mail]
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:3000/api/health"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
-      start_period: 15s
+    # Health check: the image's own (node healthcheck.mjs -> /api/health/live,
+    # liveness only, so a Stalwart restart never marks the webmail unhealthy).
     logging:
       driver: json-file
       options: { max-size: "10m", max-file: "3" }
@@ -128,7 +124,11 @@ volumes:
   bulwark-admin:
   bulwark-admin-state:
   bulwark-telemetry:
+  bulwark-plugin-secrets:
+  bulwark-version-check:
   bulwark-oqd-settings:
   bulwark-oqd-admin:
   bulwark-oqd-admin-state:
   bulwark-oqd-telemetry:
+  bulwark-oqd-plugin-secrets:
+  bulwark-oqd-version-check:
