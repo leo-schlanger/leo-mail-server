@@ -4,8 +4,8 @@ Stalwart + Bulwark em Docker, para domínios personalizados sem depender de plan
 
 | Peça | O que é | Onde |
 |---|---|---|
-| [Stalwart](https://stalw.art) v0.16 | Servidor de email (SMTP, IMAP, JMAP, antispam, DKIM/SPF/DMARC, Sieve) | `https://mail.leoschlanger.com/admin` |
-| [Bulwark](https://bulwarkmail.org) 1.11 | Webmail moderno (estilo Gmail, tema escuro, calendário, contatos, PWA) | `https://webmail.leoschlanger.com` |
+| [Stalwart](https://stalw.art) v0.16.27 | Servidor de email (SMTP, IMAP, JMAP, antispam, DKIM/SPF/DMARC, Sieve) | `https://mail.leoschlanger.com/admin` |
+| [Bulwark](https://bulwarkmail.org) 1.21.3 | Webmail moderno (estilo Gmail, tema escuro, calendário, contatos, PWA) | `https://webmail.leoschlanger.com` |
 | Traefik (já existente no host) | HTTPS e certificados Let's Encrypt | configurado via `.env` |
 
 ```
@@ -42,17 +42,32 @@ Pré-requisito: um Traefik já rodando no host, com o *file provider* e um resol
 - **Navegador:** `https://webmail.leoschlanger.com`. No celular, "Adicionar à tela inicial" instala como app.
 - **Apps (Thunderbird, Apple Mail, K-9/FairEmail, Outlook):** só email e senha; a configuração é automática (autoconfig).
   Manual: IMAP `mail.leoschlanger.com:993` SSL/TLS · SMTP `mail.leoschlanger.com:465` SSL/TLS (a porta 587 não é usada).
-- **Dentro do Gmail:** use o redirecionamento (abaixo) para receber e, para responder com o seu domínio,
-  Gmail → Configurações → *Contas e importação* → "Enviar email como" → SMTP `mail.leoschlanger.com`, porta 465, SSL.
+- **Dentro do Gmail:** use o redirecionamento (abaixo) para receber. Para responder com o seu domínio ainda
+  existe Gmail → Configurações → *Contas e importação* → "Enviar email como" → SMTP `mail.leoschlanger.com`,
+  porta 465, SSL, mas o Google remove o "Enviar como" de contas de terceiros, o Gmailify e a busca por POP
+  ("Verificar o email de outras contas") em **janeiro de 2027**
+  ([anúncio do Google](https://support.google.com/mail/answer/17101213)). Depois disso: responda pelo webmail ou
+  por um app com IMAP/SMTP (o app Gmail no celular continua a aceitar contas IMAP). Não configure busca por POP.
 
 ### Redirecionar para o Gmail (ou qualquer outro provedor)
 Webmail → Configurações → **Filtros** → nova regra "Todas as mensagens" → *Redirecionar para* `voce@gmail.com`
 (marque "manter uma cópia" se quiser guardar aqui também). É um script Sieve que roda no servidor, então funciona
 mesmo com o webmail fechado.
 
+A regra de redirecionamento para o Gmail **não reencaminha** (condições "não contém" na mesma regra):
+- spam: cabeçalho `X-Spam-Status` contém `Yes` (o veredito do antispam do Stalwart; o spam fica no Lixo eletrônico daqui);
+- relatórios DMARC e TLS-RPT: assunto contém `Report domain:` ou remetente `noreply-dmarc-support@google.com`.
+
+Porquê: em out–nov/2026 o Gmail recusou 53 cópias reencaminhadas com `421 4.7.28` ("unusual rate of
+unsolicited mail"); quase todas eram relatórios DMARC do próprio Google enviados ao `postmaster@`. Reencaminhar
+spam e relatórios automáticos baixa a reputação do servidor no Gmail e atrasa o correio que interessa.
+Os relatórios continuam na caixa daqui (webmail).
+
 Mais observações:
-- Mensagens com DKIM válido (quase todas as legítimas) chegam normais no Gmail. As que dependem só de SPF
-  podem ir para o spam, porque o Stalwart não reescreve o remetente (SRS).
+- Num redirecionamento o Stalwart envia com o remetente do envelope = a própria conta (ex.: `leo@leoschlanger.com`),
+  por isso o SPF passa no Gmail. Não há SRS: o Stalwart não o implementa (o autor considera-o obsoleto, issue
+  [#2143](https://github.com/stalwartlabs/stalwart/issues/2143)). O DMARC do remetente original depende do
+  DKIM dele, que sobrevive ao redirecionamento; mensagens sem DKIM podem ir para o spam do Gmail.
 - Para receber *qualquer* endereço do domínio (catch-all), veja no admin → Domains → `catchAllAddress`.
 
 ### Contas, aliases e domínios
@@ -66,10 +81,11 @@ Admin `https://mail.leoschlanger.com/admin` (usuário e senha do admin permanent
 | Tarefa | Comando |
 |---|---|
 | Logs | `cd /opt/mail && docker compose logs -f stalwart` |
-| Atualizar | `cd /opt/mail && docker compose pull && docker compose up -d` |
+| Atualizar | Trocar a versão em `docker-compose.yml` (fixa: `v0.16.x` e `1.21.x`), depois `docker compose pull && docker compose up -d`. **Não** passar o Stalwart para 1.x com um simples pull: exige o `stalwart-migrate` |
 | Fila de envio | `configure.sh cli query QueuedMessage` |
-| Backup manual | `/opt/mail/scripts/backup.sh` (automático todo dia 04:45, guarda 7 dias em `/opt/mail/backups`) |
+| Backup manual | `/opt/mail/scripts/backup.sh` (automático todo dia 04:45, guarda 7 dias em `/opt/mail/backups`; inclui todos os volumes `mail_*`, Stalwart e os dois webmails) |
 | Certificado | `/opt/mail/scripts/sync-certs.py` (automático todo dia 03:17; reinicia o Stalwart se mudou) |
-| Travado fora do admin | `STALWART_RECOVERY_MODE=1 docker compose up -d stalwart` → entre com o `STALWART_RECOVERY_ADMIN` do `.env` via túnel SSH em `http://localhost:8480/admin` |
+| `configure.sh` | Usa o admin permanente (`admin@leoschlanger.com`); pede a senha, ou `STALWART_ADMIN_PASSWORD=… configure.sh …` |
+| Travado fora do admin | O admin de emergência (`STALWART_RECOVERY_ADMIN`) fica **comentado** no `.env` desde 21/11/2026. Para usar: descomentar (ou pôr `admin:<senha-nova>`), `STALWART_RECOVERY_MODE=1 docker compose up -d stalwart`, entrar via túnel SSH em `http://localhost:8480/admin`, e no fim comentar de novo e `docker compose up -d stalwart` |
 
 Segredos ficam **só** no `/opt/mail/.env` do servidor (e no backup). Não vão para o git.

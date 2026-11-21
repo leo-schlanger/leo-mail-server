@@ -24,7 +24,8 @@ IP do VPS: `72.62.235.122`.
 | MX | `leoschlanger.com.` | `10 mail.leoschlanger.com.` |
 | TXT | `leoschlanger.com.` | `"v=spf1 mx -all"` |
 | TXT | `mail.leoschlanger.com.` | `"v=spf1 a -all"` |
-| TXT | `_dmarc.leoschlanger.com.` | `"v=DMARC1; p=none; rua=mailto:postmaster@leoschlanger.com; adkim=s; aspf=s"` |
+| TXT | `_dmarc.leoschlanger.com.` | `"v=DMARC1; p=none; rua=mailto:postmaster@leoschlanger.com; adkim=s; aspf=s"` (depois `p=quarantine`, ver abaixo) |
+| TXT | `_smtp._tls.leoschlanger.com.` | `"v=TLSRPTv1; rua=mailto:postmaster@leoschlanger.com"` (relatórios TLS-RPT) |
 | TXT | `<seletor>._domainkey.leoschlanger.com.` | chave DKIM gerada pelo Stalwart |
 
 As chaves DKIM (uma ed25519 e uma RSA) e os registros opcionais saem prontos com:
@@ -33,8 +34,9 @@ As chaves DKIM (uma ed25519 e uma RSA) e os registros opcionais saem prontos com
 /opt/mail/scripts/configure.sh dns
 ```
 
-Do que esse comando lista, publique também (opcional, ajuda apps a se configurarem sozinhos):
-`_imaps._tcp` e `_submissions._tcp` (SRV) e `_smtp._tls` (TLS-RPT).
+Do que esse comando lista, publique também `_smtp._tls` (TLS-RPT: os outros servidores avisam quando
+falham o TLS ao entregar) e, opcional, `_imaps._tcp` e `_submissions._tcp` (SRV).
+O `_dmarc` que o comando sugere vem com `p=reject`; use a progressão abaixo.
 
 > ⚠️ **Não publique os registros TLSA.** Eles fixam a chave do certificado, e o Traefik gera uma
 > chave nova a cada renovação (~60 dias). Com TLSA publicado, servidores com DANE deixariam de
@@ -44,6 +46,9 @@ Do que esse comando lista, publique também (opcional, ajuda apps a se configura
 > certificado próprio para `mta-sts.leoschlanger.com`.
 
 Depois de 2 a 4 semanas sem problemas nos relatórios DMARC, troque `p=none` por `p=quarantine`.
+Os relatórios ficam na caixa do `postmaster@` (não são reencaminhados para o Gmail: README, "Redirecionar").
+Leia nos XML a coluna DMARC (`policy_evaluated`): o que conta é passar DKIM **ou** SPF alinhado. SPF `fail` vindo
+de IPs do Google (`2a00:1450:…`) com DKIM nosso a passar é correio nosso que o Google reencaminhou; passa DMARC pelo DKIM.
 
 ## Chaves DKIM não rodam sozinhas
 
@@ -56,7 +61,9 @@ seletores no DNS e só então remova os antigos.
 1. Adicione o domínio em `stalwart/plan.ndjson` e rode `configure.sh cli apply --file plan.ndjson`
    (ou pelo admin: *Management → Domains*). Contas: `configure.sh user NOME outro-dominio.com`.
 2. No DNS **do novo domínio**: `MX 10 mail.leoschlanger.com.`, `TXT "v=spf1 a:mail.leoschlanger.com -all"`,
-   os DKIM de `configure.sh dns outro-dominio.com` e um `_dmarc`.
+   os DKIM de `configure.sh dns outro-dominio.com`, um `_dmarc`, o `_smtp._tls` e os CNAME `autoconfig`/`autodiscover`
+   → `mail.leoschlanger.com.`. Os CNAME só funcionam com uma rota no Traefik (ex.: `traefik/astralvita.yml`), copiada
+   para o `TRAEFIK_DYNAMIC_DIR` **depois** de o DNS existir.
 3. Não precisa de novo certificado: todos os domínios usam `mail.leoschlanger.com` como servidor.
 
 ## Checagens

@@ -1,0 +1,14 @@
+# Traefik dynamic config for the astralvita.com autoconfig hostnames (mail
+# apps set themselves up from the email address alone).
+# Copied into $TRAEFIK_DYNAMIC_DIR (replace __CERT_RESOLVER__) only AFTER the
+# DNS records below exist, so Let's Encrypt validation succeeds:
+#   autoconfig / autodiscover .astralvita.com  CNAME  mail.leoschlanger.com.
+http:
+  routers:
+    astral-autoconfig:
+      rule: "Host(`autoconfig.astralvita.com`) || Host(`autodiscover.astralvita.com`)"
+      entryPoints:
+        - websecure
+      service: stalwart
+      tls:
+        certResolver: __CERT_RESOLVER__

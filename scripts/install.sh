@@ -52,6 +52,9 @@ cat > /etc/cron.d/mail-stack <<'EOF'
 # Managed by /opt/mail/scripts/install.sh
 17 3 * * * root /opt/mail/scripts/sync-certs.py >> /opt/mail/logs/sync-certs.log 2>&1
 45 4 * * * root /opt/mail/scripts/backup.sh >> /opt/mail/logs/backup.log 2>&1
+# Re-pull the helper images after a host-wide `docker image prune -a` (its
+# until= filter goes by image build date, so it can't protect them).
+40 0 * * * root docker pull -q alpine:3.22 >/dev/null 2>&1; docker pull -q stalwartlabs/cli:1.0.14 >/dev/null 2>&1
 EOF
 
 echo
