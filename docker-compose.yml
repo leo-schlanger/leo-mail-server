@@ -13,11 +13,13 @@ services:
     container_name: stalwart
     restart: unless-stopped
     hostname: mail.leoschlanger.com
-    env_file: .env
+    # Only Stalwart's own variables (no env_file: .env also holds the webmail
+    # secrets). An empty STALWART_RECOVERY_ADMIN means "no break-glass admin".
     environment:
       STALWART_PUBLIC_URL: https://mail.leoschlanger.com
       # 1 = recovery mode (admin on :8080 only); used by scripts/configure.sh
       STALWART_RECOVERY_MODE: ${STALWART_RECOVERY_MODE:-0}
+      STALWART_RECOVERY_ADMIN: ${STALWART_RECOVERY_ADMIN:-}
     ports:
       - "25:25"       # SMTP (receive mail from other servers)
       - "465:465"     # SMTP submission, implicit TLS (mail clients send)

@@ -66,6 +66,11 @@ case "${1:-}" in
     ;;
   apply)
     cli apply --file plan.ndjson
+    # POP3 (995) is not published by the compose file, so drop its listener:
+    # otherwise autoconfig advertises a port nobody can reach.
+    pop_id=$(cli query NetworkListener --fields id,name --json | python3 -c \
+      "import sys,json; print(next((r['id'] for r in map(json.loads,sys.stdin) if r.get('name')=='pop3s'),''))")
+    [ -z "$pop_id" ] || cli delete NetworkListener "$pop_id"
     # Certificate has no natural key, so it is created once instead of upserted.
     cert_id=$(first_id Certificate)
     if [ -z "$cert_id" ]; then
