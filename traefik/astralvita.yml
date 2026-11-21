@@ -5,8 +5,18 @@
 #   autoconfig / autodiscover .astralvita.com  CNAME  mail.leoschlanger.com.
 http:
   routers:
+    # One router (and certificate) per host, so a missing record never
+    # blocks the other one.
     astral-autoconfig:
-      rule: "Host(`autoconfig.astralvita.com`) || Host(`autodiscover.astralvita.com`)"
+      rule: "Host(`autoconfig.astralvita.com`)"
+      entryPoints:
+        - websecure
+      service: stalwart
+      tls:
+        certResolver: __CERT_RESOLVER__
+
+    astral-autodiscover:
+      rule: "Host(`autodiscover.astralvita.com`)"
       entryPoints:
         - websecure
       service: stalwart
