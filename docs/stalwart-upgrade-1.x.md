@@ -1,6 +1,6 @@
 # Stalwart 0.16.27 → 1.x: avaliação e plano de migração
 
-Estado: **plano, nada executado** (24/11/2026). Fontes: notas de versão v1.0.0–v1.2.0 em
+Estado: **plano, nada executado** (24/11/2026; alvo 1.1.1 revisto a 25/11, sem upgrade). Fontes: notas de versão v1.0.0–v1.2.0 em
 github.com/stalwartlabs/stalwart, `SECURITY.md` do mesmo repo, README, `SCHEMA_CHANGES.md` e CHANGELOG de
 github.com/stalwartlabs/stalwart-migrate (v1.0.8), stalw.art/docs/migration/upgrade-0-16/ (e a subpágina
 troubleshooting), notas de versão do Bulwark 1.18–1.21.3.
@@ -14,6 +14,25 @@ meados de dezembro de 2026 e março de 2027, quando se cumprirem estas condiçõ
   que bloqueiam o `run --final`);
 - a linha 1.x de destino tem pelo menos um patch e 7 dias sem regressões (a v1.2.0 saiu a 23/11/2026);
 - o ensaio passou todos os critérios da secção 5.
+
+## 0. Alvo pedido a 25/11/2026: v1.1.1 (não executado)
+
+O pedido foi 0.16.27 → **1.1.1**. Li as notas da [v1.1.0](https://github.com/stalwartlabs/stalwart/releases/tag/v1.1.0) (09/11/2026) e da [v1.1.1](https://github.com/stalwartlabs/stalwart/releases/tag/v1.1.1) (16/11/2026). A v1.2.0 já tinha saído a 23/11/2026. Parar na 1.1.1 deixa de fora os patches posteriores. A recomendação não muda: **não atualizar agora**. Nada foi corrido na VPS a 25/11.
+
+O que parte esta instalação não é o patch 1.1.1. É o salto 0.16 → 1.0: a 1.x recusa o store antigo (`schema version` anterior a 1.0) e não há upgrade no lugar. Continua a ser obrigatório o `stalwart-migrate`, com a 0.16.27 como origem. Backup e janela estão nas secções 4 e 6.
+
+O que a linha 1.1 muda e toca neste servidor:
+
+| Mudança | Aqui |
+|---|---|
+| 1.1.0: papéis por omissão sem `sysPasskey*` | Já no plano (#9): um arranque com `STALWART_UPDATE_ROLE_PERMISSIONS=true`, depois tirar a variável. Não usamos passkeys. |
+| 1.1.0: passkeys WebAuthn, relying party = host do URL público | Não ligar no dia da migração. Os dois Bulwark têm de continuar no host certo se um dia se ligarem. |
+| 1.1.0 ACME (SAN rejeitado, renovação) | Não se aplica: certificados manuais, copiados do Traefik. |
+| 1.1.1 Sieve: `envelope "to"` passa a ser o `RCPT TO` com `+detail` | Pode mudar regras de reencaminhamento. No ensaio, comparar as Sieve do `geral@` e das contas OQD antes e depois. |
+| 1.1.1 IMAP: `EXISTS` antes de FETCH/SEARCH/STORE (RFC 9051) | Correção. Os clientes deixam de poder saltar uma UID nova. |
+| 1.1.1 WebDAV: `nosniff` + CSP em `/dav/file/` | Correção. Pouco usado aqui. |
+| 1.1.1 Netcup `apiKey`, fila por tenant, retries S3, cifra em repouso, métricas Enterprise | Não se aplicam: RocksDB, sem Netcup, sem multi-tenant, sem S3, sem cifra, sem licença Enterprise. |
+| 1.1.0 DKIM: uma chave cujo DNS não se constrói deixa de bloquear as outras | Positivo para os seletores Ed25519+RSA. Confirmar no ensaio que os TXT não mudam. |
 
 Porquê:
 
