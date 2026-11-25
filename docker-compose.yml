@@ -9,7 +9,7 @@ name: mail
 
 services:
   stalwart:
-    image: stalwartlabs/stalwart:v0.16.27   # stay on 0.16: 1.x needs stalwart-migrate
+    image: stalwartlabs/stalwart:v1.2.0   # migrated 2026-11-25; 0.16 volumes kept for rollback
     container_name: stalwart
     restart: unless-stopped
     hostname: mail.leoschlanger.com
@@ -26,8 +26,11 @@ services:
       - "993:993"     # IMAP over TLS (mail clients read)
       - "127.0.0.1:8480:8080"   # HTTP: admin, JMAP, autoconfig -> Traefik
     volumes:
-      - stalwart-etc:/etc/stalwart
-      - stalwart-data:/var/lib/stalwart
+      - stalwart-v1-etc:/etc/stalwart
+      - stalwart-v1-data:/var/lib/stalwart-v1
+      # 0.16 store, unread, kept for rollback
+      - stalwart-etc:/etc/stalwart-v016:ro
+      - stalwart-data:/var/lib/stalwart-v016:ro
       # TLS cert/key exported from Traefik's acme.json by scripts/sync-certs.py
       - ./certs:/certs:ro
     networks:
@@ -122,6 +125,8 @@ networks:
 volumes:
   stalwart-etc:
   stalwart-data:
+  stalwart-v1-etc:
+  stalwart-v1-data:
   bulwark-settings:
   bulwark-admin:
   bulwark-admin-state:

@@ -1,23 +1,25 @@
+Estado: **executado em 2026-11-25** às 14:27 UTC. Imagem em produção: `stalwartlabs/stalwart:v1.2.0` (não 1.1.1: a 1.2.0 já era a última e o ensaio abriu o store nela). Ferramenta: `stalwart-migrate:1.0.8` (a 1.0.9 ainda não existia; neste servidor o `run --final` passou, 9 contas, 0 mismatches). O correio 0.16.27 ficou intacto nos volumes `mail_stalwart-etc` e `mail_stalwart-data`, montados só de leitura. Backup e imagem antiga: `/root/pre-stalwart-v1-20261125/`. Estado do migrate: volume `mail_migrate-state` (preciso para um rollback). Webmail: os tokens OAuth não migram, por isso o login do webmail pede outra vez. Senha no IMAP/SMTP mantém-se.
+
 # Stalwart 0.16.27 → 1.x: avaliação e plano de migração
 
-Estado: **plano, nada executado** (24/11/2026; alvo 1.1.1 revisto a 25/11, sem upgrade). Fontes: notas de versão v1.0.0–v1.2.0 em
+O plano abaixo foi seguido na execução de 25/11/2026. Fontes: notas de versão v1.0.0–v1.2.0 em
 github.com/stalwartlabs/stalwart, `SECURITY.md` do mesmo repo, README, `SCHEMA_CHANGES.md` e CHANGELOG de
 github.com/stalwartlabs/stalwart-migrate (v1.0.8), stalw.art/docs/migration/upgrade-0-16/ (e a subpágina
 troubleshooting), notas de versão do Bulwark 1.18–1.21.3.
 
 ## 1. Recomendação
 
-**Esperar.** Fazer o ensaio (secção 5) quando houver tempo. A migração real fica para uma janela entre
-meados de dezembro de 2026 e março de 2027, quando se cumprirem estas condições:
+**Feito em 2026-11-25**, por pedido do Leo, depois do ensaio. As condições de espera eram:
 
 - o `stalwart-migrate` ≥ 1.0.9 já saiu (a 1.0.9 ainda não foi lançada e corrige amostras de spam expiradas
-  que bloqueiam o `run --final`);
+  que bloqueiam o `run --final`); neste servidor o `run --final` da 1.0.8 passou, com 0 erros;
 - a linha 1.x de destino tem pelo menos um patch e 7 dias sem regressões (a v1.2.0 saiu a 23/11/2026);
-- o ensaio passou todos os critérios da secção 5.
+  o Leo pediu para avançar na mesma, e o alvo foi a 1.2.0 porque a 1.1.1 já estava ultrapassada;
+- o ensaio passou a cópia e a verificação (9 contas, 0 mismatches) e o v1.2.0 abriu o store.
 
 ## 0. Alvo pedido a 25/11/2026: v1.1.1 (não executado)
 
-O pedido foi 0.16.27 → **1.1.1**. Li as notas da [v1.1.0](https://github.com/stalwartlabs/stalwart/releases/tag/v1.1.0) (09/11/2026) e da [v1.1.1](https://github.com/stalwartlabs/stalwart/releases/tag/v1.1.1) (16/11/2026). A v1.2.0 já tinha saído a 23/11/2026. Parar na 1.1.1 deixa de fora os patches posteriores. A recomendação não muda: **não atualizar agora**. Nada foi corrido na VPS a 25/11.
+O pedido inicial foi 0.16.27 → **1.1.1**. As notas da [v1.1.0](https://github.com/stalwartlabs/stalwart/releases/tag/v1.1.0) (09/11/2026) e da [v1.1.1](https://github.com/stalwartlabs/stalwart/releases/tag/v1.1.1) (16/11/2026) foram lidas antes. A v1.2.0 já tinha saído a 23/11/2026, e foi essa a imagem que entrou em produção.
 
 O que parte esta instalação não é o patch 1.1.1. É o salto 0.16 → 1.0: a 1.x recusa o store antigo (`schema version` anterior a 1.0) e não há upgrade no lugar. Continua a ser obrigatório o `stalwart-migrate`, com a 0.16.27 como origem. Backup e janela estão nas secções 4 e 6.
 

@@ -23,6 +23,11 @@ mounts=()
 for v in $(docker volume ls -q --filter label=com.docker.compose.project=mail); do
   mounts+=(-v "$v:/src/${v#mail_}:ro")
 done
+# v1 volumes were created before compose owned them, so they have no project label.
+for v in mail_stalwart-v1-etc mail_stalwart-v1-data mail_migrate-state; do
+  docker volume inspect "$v" >/dev/null 2>&1 || continue
+  mounts+=(-v "$v:/src/${v#mail_}:ro")
+done
 [ ${#mounts[@]} -gt 0 ] || { echo "ABORT: no mail_* volumes found" >&2; exit 1; }
 
 docker compose stop stalwart >/dev/null

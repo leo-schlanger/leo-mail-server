@@ -4,7 +4,7 @@ Stalwart + Bulwark em Docker, para domínios personalizados sem depender de plan
 
 | Peça | O que é | Onde |
 |---|---|---|
-| [Stalwart](https://stalw.art) v0.16.27 | Servidor de email (SMTP, IMAP, JMAP, antispam, DKIM/SPF/DMARC, Sieve) | `https://mail.leoschlanger.com/admin` |
+| [Stalwart](https://stalw.art) v1.2.0 | Servidor de email (SMTP, IMAP, JMAP, antispam, DKIM/SPF/DMARC, Sieve) | `https://mail.leoschlanger.com/admin` |
 | [Bulwark](https://bulwarkmail.org) 1.21.3 | Webmail moderno (estilo Gmail, tema escuro, calendário, contatos, PWA) | `https://webmail.leoschlanger.com` |
 | Traefik (já existente no host) | HTTPS e certificados Let's Encrypt | configurado via `.env` |
 
@@ -81,7 +81,7 @@ Admin `https://mail.leoschlanger.com/admin` (usuário e senha do admin permanent
 | Tarefa | Comando |
 |---|---|
 | Logs | `cd /opt/mail && docker compose logs -f stalwart`. O log do container perde-se quando o container é recriado: cópia diária (00:15 UTC, dia anterior) em `/opt/mail/logs/stalwart/stalwart-AAAA-MM-DD.log.gz`, 30 dias (`scripts/export-logs.sh [AAAA-MM-DD]`). Antes de recriar o container, correr `export-logs.sh $(date -u +%F)` para guardar o dia em curso |
-| Atualizar | Trocar a versão em `docker-compose.yml` (fixa: `v0.16.x` e `1.21.x`), depois `docker compose pull && docker compose up -d`. **Não** passar o Stalwart para 1.x com um simples pull: exige o `stalwart-migrate` |
+| Atualizar | Stalwart está em `v1.2.0` desde 2026-11-25 (migração com `stalwart-migrate` 1.0.8, não foi um pull). Os volumes 0.16 ficam montados só de leitura até 2026-12-25. O backup diário inclui os volumes v1. Bulwark continua em `1.21.x`. |
 | Fila de envio | `configure.sh cli query QueuedMessage` |
 | Backup manual | `/opt/mail/scripts/backup.sh` (automático todo dia 04:45, guarda 7 dias em `/opt/mail/backups`; inclui todos os volumes `mail_*`, Stalwart e os dois webmails) |
 | Certificado | `/opt/mail/scripts/sync-certs.py` (automático todo dia 03:17; reinicia o Stalwart se mudou) |
