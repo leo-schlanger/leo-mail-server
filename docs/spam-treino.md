@@ -50,7 +50,7 @@ Antes: confirmar que o backup das 04:45 desse dia correu (`/opt/mail/logs/backup
 4. Treinar já, sem esperar as 12 h:
    `configure.sh cli create Task/SpamFilterMaintenance --field maintenanceType=train`.
 5. Verificar: `docker logs stalwart | grep -E 'spam.train-(started|completed)|spam.model-loaded'`. Depois
-   o check diário do correio (n8n M1) envia «RECUPERADO» para `mail:spam-model`.
+   o check diário do correio deixa de avisar e envia um aviso de recuperação.
 
 Desfazer: `Task/SpamFilterMaintenance` com `maintenanceType=reset` (apaga o modelo), e apagar as
 amostras criadas (`cli delete SpamTrainingSample --ids …`). O correio não é tocado em nenhum passo.
@@ -58,10 +58,12 @@ amostras criadas (`cli delete SpamTrainingSample --ids …`). O correio não é 
 Pontos por confirmar no ensaio:
 - se o admin pode criar amostras com blobs de outra conta;
 - a sintaxe exata da variante `Task/SpamFilterMaintenance` no CLI 1.0.14 (é a mesma forma de
-  `Account/User` usada no `configure.sh`).
+  `Account/User` usada no `configure.sh`);
+- os eventos `spam.model-loaded` e `spam.train-completed` saem das strings do binário 1.2.0 e ainda
+  não foram vistos no log.
 
 ## Aviso enquanto não houver modelo
 
-O check M1 do n8n (repo `n8n-workflows`) verifica todos os dias. Enquanto não houver modelo, avisa
-**1 vez por semana**, e o aviso de recuperação sai no próprio dia em que o modelo aparecer
-(`spam.model-loaded` ou `spam.train-completed` no log).
+O check diário do correio corre todos os dias. Enquanto não houver modelo, avisa **1 vez por
+semana**, e o aviso de recuperação sai no próprio dia em que o modelo aparece (`spam.model-loaded` ou
+`spam.train-completed` no log).
